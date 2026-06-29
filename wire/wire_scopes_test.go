@@ -4,11 +4,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/subosito/daigate/adaptersdk"
+	"github.com/subosito/daigate/internal/testfixture"
 	"github.com/subosito/daigate/passthrough"
 	"github.com/subosito/daigate/catalog"
 	"github.com/subosito/daigate/credential/seal"
@@ -53,7 +53,7 @@ func TestModelsListFilteredByScope(t *testing.T) {
 
 func testModelsEngineWithKeyScoped(t *testing.T, scopes []string) (*wire.Engine, string) {
 	t.Helper()
-	p := filepath.Join("..", "testdata", "fixtures", "providers.yaml")
+	p := testfixture.ProvidersYAML()
 	cat, err := catalog.Load(p)
 	if err != nil {
 		t.Fatal(err)

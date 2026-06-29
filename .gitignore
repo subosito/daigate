@@ -4,5 +4,5 @@
 bin/
 broker.db
 daigate.yaml
-providers.yaml
+/providers.yaml
 *.log

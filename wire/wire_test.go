@@ -12,6 +12,7 @@ import (
 	"github.com/subosito/daigate/adaptersdk"
 	"github.com/subosito/daigate/passthrough"
 	"github.com/subosito/daigate/catalog"
+	"github.com/subosito/daigate/internal/testfixture"
 	"github.com/subosito/daigate/credential/seal"
 	"github.com/subosito/daigate/credential/store"
 	"github.com/subosito/daigate/ingress/keyring"
@@ -290,7 +291,7 @@ func testModelsEngine(t *testing.T) *wire.Engine {
 
 func testModelsEngineWithKey(t *testing.T) (*wire.Engine, string) {
 	t.Helper()
-	p := filepath.Join("..", "testdata", "fixtures", "providers.yaml")
+	p := testfixture.ProvidersYAML()
 	cat, err := catalog.Load(p)
 	if err != nil {
 		t.Fatal(err)

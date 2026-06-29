@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/subosito/daigate/catalog"
+	"github.com/subosito/daigate/internal/testfixture"
 )
 
 func TestResolveFailover(t *testing.T) {
-	path := filepath.Join("..", "testdata", "fixtures", "providers.yaml")
+	path := testfixture.ProvidersYAML()
 	cat, err := catalog.Load(path)
 	if err != nil {
 		t.Fatal(err)
@@ -141,7 +142,7 @@ models:
 }
 
 func TestListModels(t *testing.T) {
-	path := filepath.Join("..", "testdata", "fixtures", "providers.yaml")
+	path := testfixture.ProvidersYAML()
 	cat, err := catalog.Load(path)
 	if err != nil {
 		t.Fatal(err)

@@ -1,0 +1,32 @@
+# Multi-surface provider catalog — see docs/catalog.md
+
+providers:
+  openai:
+    credential_profile: openai
+    surfaces:
+      chat:
+        protocol: openai-chat-completions
+        base_url: https://api.openai.com
+      embed:
+        protocol: openai-embeddings
+        base_url: https://api.openai.com
+
+models:
+  gpt-5.4-mini:
+    modalities:
+      chat:
+        wire: openai-chat-completions
+        strategy: failover
+        providers:
+          - provider_ref: openai
+            surface: chat
+            model: gpt-5.4-mini
+  text-embedding-3-small:
+    modalities:
+      embed:
+        wire: openai-embeddings
+        strategy: failover
+        providers:
+          - provider_ref: openai
+            surface: embed
+            model: text-embedding-3-small
