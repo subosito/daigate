@@ -1,0 +1,8 @@
+.envrc
+.direnv/
+.devenv/
+bin/
+broker.db
+daigate.yaml
+providers.yaml
+*.log
