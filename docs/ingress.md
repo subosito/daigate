@@ -172,7 +172,7 @@ text-embedding-3-small:
           model: text-embedding-3-small
 ```
 
-**v1:** no automatic translation between chat wires. If a tool only speaks OpenAI chat completions, catalog that model with `wire: openai-chat-completions` and an OpenAI-compatible upstream.
+Catalog each model for the wire your client uses: OpenAI SDK → `wire: openai-chat-completions` with an upstream `protocol: openai-chat-completions` (or compat); Anthropic SDK → `wire: anthropic-messages` with `protocol: anthropic-messages`. See [catalog.md](catalog.md) § Wire rules.
 
 ---
 

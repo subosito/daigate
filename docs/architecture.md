@@ -138,6 +138,6 @@ Operator modules register at link time:
 
 **OTel lifecycle:** standalone `main` calls `Boot` before `ListenAndServe`; library embedders call `Hook` after host `Boot`. `gateway.ListenAndServe` does not init or shutdown exporters.
 
-No cross-wire chat translation in v1. Media translate adapters convert shapes inside the handler ([media.md](media.md)).
+**Chat** relays passthrough when `surface.protocol` matches the ingress wire; operator-linked translate adapters handle vendor-specific APIs. **Media** translate adapters convert shapes inside the handler ([media.md](media.md)).
 
 CLI vs library → [runtime.md](runtime.md). Adapter authoring → [adapters.md](adapters.md), [adaptersdk.md](adaptersdk.md).

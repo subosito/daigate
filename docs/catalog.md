@@ -229,7 +229,7 @@ Also: `GET /v1/models`, `GET /v1/healthz`.
 
 ### Wire rules
 
-**Chat:** no cross-wire translation (Messages ↔ Chat Completions) in v1.
+**Chat:** each modality declares an ingress `wire` (`openai-chat-completions` or `anthropic-messages`). Catalog picks a provider `surface` whose `protocol` matches that wire (or an explicit pool `surface:`); the core **passthrough** handler relays the request unchanged. Pool `model:` rewrites the upstream model id (catalog alias → vendor string). Vendor-specific chat APIs use `surface.adapter` (operator-linked translate handler).
 
 **Embeddings:** OpenAI-compatible ingress body. Passthrough `openai-embeddings` relays to upstream `/v1/embeddings`.
 
