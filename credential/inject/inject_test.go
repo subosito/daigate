@@ -38,27 +38,25 @@ func TestApplyInjectsXAPIKey(t *testing.T) {
 	}
 }
 
-func TestApplyInjectsCustomHeaderPreset(t *testing.T) {
+func TestApplyRouteRejectsUnknownInjectPreset(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodPost, "http://example.com", nil)
-	inject.Apply(store.Material{Kind: store.KindAPIKey, APIKey: "el-key"}, req, "xi-api-key")
-	if req.Header.Get("xi-api-key") != "el-key" {
-		t.Fatalf("xi-api-key=%q", req.Header.Get("xi-api-key"))
-	}
-	if req.Header.Get("Authorization") != "" {
-		t.Fatalf("authorization should be stripped")
+	mat := store.Material{Kind: store.KindAPIKey, APIKey: "sk-test"}
+	err := inject.ApplyRoute(mat, req, inject.Route{Preset: "vendor-custom-preset"}, inject.AdapterDefault{})
+	if err == nil {
+		t.Fatal("expected error for unknown inject_preset")
 	}
 }
 
 func TestApplyOAuthPresetRegistered(t *testing.T) {
-	inject.RegisterOAuthPreset("anthropic_oauth", func(r *http.Request) {
-		r.Header.Set("anthropic-beta", "oauth-2025-04-20")
+	inject.RegisterOAuthPreset("vendor_oauth", func(r *http.Request) {
+		r.Header.Set("x-vendor-beta", "oauth-2025-04-20")
 	})
 	req, _ := http.NewRequest(http.MethodPost, "http://example.com", nil)
-	inject.Apply(store.Material{Kind: store.KindOAuth, AccessToken: "oat"}, req, "anthropic_oauth")
+	inject.Apply(store.Material{Kind: store.KindOAuth, AccessToken: "oat"}, req, "vendor_oauth")
 	if req.Header.Get("Authorization") != "Bearer oat" {
 		t.Fatalf("auth=%q", req.Header.Get("Authorization"))
 	}
-	if req.Header.Get("anthropic-beta") != "oauth-2025-04-20" {
-		t.Fatalf("beta=%q", req.Header.Get("anthropic-beta"))
+	if req.Header.Get("x-vendor-beta") != "oauth-2025-04-20" {
+		t.Fatalf("beta=%q", req.Header.Get("x-vendor-beta"))
 	}
 }

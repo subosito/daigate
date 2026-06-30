@@ -176,7 +176,14 @@ type Applier interface {
 }
 ```
 
-Provider **templates** in catalog may declare `inject_preset: bearer | x-api-key | <header-name>`. OAuth extras (e.g. `anthropic_oauth` beta header) register via `inject.RegisterOAuthPreset` in the **operator binary** at link time — not in stock CLI.
+Provider **templates** in catalog may declare:
+
+- **`inject:`** — map of one or more headers with `${key}` / `${access}` / `${accountId}` / `${projectId}` placeholders (preferred for multi-header OAuth)
+- **`inject_preset`** — shorthand for `bearer` or `x-api-key`
+
+Resolution: `inject` map → `inject_preset` → adapter default → bearer. Full examples: [catalog-inject.md](catalog-inject.md).
+
+OAuth extras (e.g. a `vendor_oauth` preset adding a beta header) register via `inject.RegisterOAuthPreset` in the **operator binary** at link time — not in stock CLI.
 
 ### Credential metadata (`Material.Extras`)
 
@@ -186,7 +193,7 @@ Provider **templates** in catalog may declare `inject_preset: bearer | x-api-key
 |-------|----------------|
 | **Core store** | Persist `extras` map; merge legacy `accountId` / `project_id` keys into `extras` on read for backward compat |
 | **Core inject** | Never set vendor-specific headers from hard-coded field names |
-| **Integrator adapters** | Read `Material.Extra("…")` and set upstream headers their vendor requires (e.g. Codex `chatgpt-account-id` from `account_id`) |
+| **Integrator adapters** | Read `Material.Extra("…")` and set upstream headers their vendor requires (e.g. `x-account-id` from `account_id`) |
 | **Vendor OAuth modules** | Populate `extras` at login/refresh time; refresh preserves keys via `MergeExtras` |
 
 Do **not** add per-provider fields to `store.Material` or core inject. New vendor requirements → new `extras` keys + adapter or `RegisterOAuthPreset` in the operator binary.
@@ -307,7 +314,7 @@ daigate credential show 3
 | Gateway key issue | admin API + optional issuer plugins | admin, **provision**; self-service issuers via linked plugins |
 | Control-plane roles | admin vs provision tokens | provision cannot list upstream credentials |
 | Secret storage | `credential.Store` + **encryption at rest** | sqlite (encrypted), memory (tests); alternate backends via linked plugins |
-| Upstream headers | `inject.Apply` + `inject_preset` | bearer, x-api-key, custom header name |
+| Upstream headers | `inject.ApplyRoute` + catalog `inject` / `inject_preset` | multi-header map, bearer, x-api-key, custom header name |
 | OAuth | `oauth/generic` from `credential_profiles` | stock CLI |
 | OAuth (vendor) | `oauth.Module` at integrator build | non-RFC vendors only |
 | Credential list | `GET /v1/credentials` + CLI | metadata only — [security.md § Credential listing](security.md#credential-listing-operator) |

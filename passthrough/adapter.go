@@ -84,6 +84,8 @@ func relay(ctx context.Context, client *http.Client, t handler.Target, method, p
 		return nil, err
 	}
 	inject.CopyHeaders(req, hdr)
-	inject.Apply(t.Material, req, t.InjectPreset)
+	if err := inject.ApplyRoute(t.Material, req, inject.Route{Spec: t.Inject, Preset: t.InjectPreset}, inject.AdapterDefault{}); err != nil {
+		return nil, err
+	}
 	return observability.HTTPDo(ctx, client, req)
 }

@@ -16,7 +16,7 @@ var (
 	oauthPresets  = map[string]OAuthPresetFunc{}
 )
 
-// RegisterOAuthPreset registers extension OAuth header shaping (e.g. anthropic_oauth).
+// RegisterOAuthPreset registers extension OAuth header shaping (integrator binary).
 func RegisterOAuthPreset(name string, fn OAuthPresetFunc) {
 	key := strings.ToLower(strings.TrimSpace(name))
 	if key == "" || fn == nil {
@@ -43,10 +43,14 @@ func StripClient(r *http.Request) {
 	r.Header.Del("X-Api-Key")
 }
 
-// Apply writes upstream auth headers from material.
-// API key presets: bearer (default), x-api-key, or any other header name.
+// Apply writes upstream auth headers from material (legacy/internal callers).
+// Catalog yaml should use ApplyRoute; inject_preset there is limited to bearer | x-api-key.
 func Apply(m store.Material, r *http.Request, preset string) {
 	StripClient(r)
+	applyPreset(m, r, preset)
+}
+
+func applyPreset(m store.Material, r *http.Request, preset string) {
 	preset = strings.ToLower(strings.TrimSpace(preset))
 	switch m.Kind {
 	case store.KindAPIKey:
@@ -59,13 +63,13 @@ func Apply(m store.Material, r *http.Request, preset string) {
 
 func applyAPIKey(key string, r *http.Request, preset string) {
 	key = strings.TrimSpace(key)
-	switch preset {
+	switch strings.ToLower(strings.TrimSpace(preset)) {
 	case "", "bearer":
 		r.Header.Set("Authorization", "Bearer "+key)
 	case "x-api-key":
 		r.Header.Set("x-api-key", key)
 	default:
-		r.Header.Set(preset, key)
+		r.Header.Set("Authorization", "Bearer "+key)
 	}
 }
 

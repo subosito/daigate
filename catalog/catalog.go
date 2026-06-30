@@ -38,6 +38,7 @@ type Surface struct {
 // Provider is a logical vendor connection.
 type Provider struct {
 	CredentialProfile string             `yaml:"credential_profile"`
+	Inject            map[string]string  `yaml:"inject,omitempty"`
 	InjectPreset      string             `yaml:"inject_preset,omitempty"`
 	Surfaces          map[string]Surface `yaml:"surfaces"`
 	// flat legacy
@@ -143,6 +144,7 @@ type Target struct {
 	BaseURL           string
 	CredentialProfile string
 	UpstreamModel     string
+	Inject            map[string]string
 	InjectPreset      string
 }
 
@@ -266,7 +268,9 @@ func (c *Catalog) targetFromEntry(model string, entry PoolEntry, wire string) (T
 		Model: model, ProviderRef: entry.ProviderRef,
 		Protocol: surf.Protocol, Adapter: surf.Adapter, BaseURL: surf.BaseURL,
 		CredentialProfile: prov.CredentialProfile,
-		UpstreamModel: upstreamModel, InjectPreset: prov.InjectPreset,
+		UpstreamModel:     upstreamModel,
+		Inject:            prov.Inject,
+		InjectPreset:      prov.InjectPreset,
 	}, nil
 }
 

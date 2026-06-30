@@ -84,7 +84,10 @@ Some deployments use **one catalog row per wire** (`openai-chat`, `openai-embed`
 | `adapter` | Translate handler name — must be registered in your binary (e.g. `myvendor`) |
 | `base_url` | Upstream API root (HTTPS). Passthrough appends wire paths (`/v1/chat/completions`, …); duplicate `/v1` segments are collapsed when `base_url` already ends with `/v1` |
 | `credential_profile` | Credential store key for `Store.Get` |
-| `inject_preset` | How to apply auth on outbound requests |
+| `inject` | Optional map of header → template (`${key}`, `${access}`, `${accountId}`, `${projectId}`) — wins over `inject_preset` |
+| `inject_preset` | Optional shorthand when `inject` is omitted — **only** `bearer` or `x-api-key` |
+
+See [catalog-inject.md](catalog-inject.md) for resolution order, multi-header OAuth, and adapter defaults.
 
 ### `provider_ref` — operator alias (rename freely)
 
@@ -189,7 +192,7 @@ daigate stores modalities as **`models.<id>.modalities.<key>`** — the `<key>` 
 | `speech` | `/v1/audio/speech` | TTS |
 | `video` | `/v1/videos/generations`, `GET /v1/videos/{id}` | Video gen |
 
-Hosts may add more keys (`search_web`, `audio_in`, …) for extra surfaces on the same wire. Those names live in **your** catalog only; map them to **`X-Catalog-Modality`** at the host edge. Do not assume daigate knows product-specific labels.
+Hosts may add more keys (`search_web`, `voice`, …) for extra surfaces on the same wire. Those names live in **your** catalog only; map them to **`X-Catalog-Modality`** at the host edge. Do not assume daigate knows product-specific labels.
 
 **Disambiguation default:** when the only ambiguity is `chat` plus keys named `search_web` / `search_x`, resolve defaults to `chat` without a header. All other multi-modality wires require **`X-Catalog-Modality`** (e.g. `chat` + `image` on `openai-chat-completions`).
 
