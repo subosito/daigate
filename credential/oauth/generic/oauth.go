@@ -429,12 +429,7 @@ func RefreshProfile(ctx context.Context, st store.Store, profile string, o confi
 	if refreshed.Email == "" {
 		refreshed.Email = cur.Email
 	}
-	if refreshed.AccountID == "" {
-		refreshed.AccountID = cur.AccountID
-	}
-	if refreshed.ProjectID == "" {
-		refreshed.ProjectID = cur.ProjectID
-	}
+	refreshed.Extras = store.MergeExtras(cur.Extras, refreshed.Extras)
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		if err := st.UpdateOAuth(ctx, profile, refreshed); err == nil {

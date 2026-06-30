@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -88,7 +89,15 @@ func (s *SQLite) SnapshotMeta(ctx context.Context) (SnapshotMeta, error) {
 }
 
 func (s *SQLite) decryptData(dataEnc string) ([]byte, error) {
-	return s.key.Decrypt([]byte(dataEnc))
+	raw := []byte(dataEnc)
+	// Legacy plaintext rows from dududu-auth / stock router share the same broker.db.
+	var legacy struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(raw, &legacy); err == nil && (legacy.Type == "api_key" || legacy.Type == "oauth") {
+		return raw, nil
+	}
+	return s.key.Decrypt(raw)
 }
 
 func (s *SQLite) materialFromRow(profile, kind, dataEnc, identity string) (Material, error) {

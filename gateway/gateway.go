@@ -40,7 +40,8 @@ type Config struct {
 	AdminEnabled  bool
 	DataListen    string
 	AdminListen   string
-	DataMount     DataMount
+	DataMount        DataMount
+	WrapDataHandler  func(http.Handler) http.Handler
 }
 
 // Gateway holds HTTP servers and lifecycle state.
@@ -142,7 +143,11 @@ func (g *Gateway) dataHandler() http.Handler {
 		g.cfg.DataMount(mux, engine)
 	}
 	mux.Handle("/", g.track(engine.Handler()))
-	return mux
+	h := http.Handler(mux)
+	if g.cfg.WrapDataHandler != nil {
+		h = g.cfg.WrapDataHandler(h)
+	}
+	return h
 }
 
 func (g *Gateway) adminHandler() http.Handler {

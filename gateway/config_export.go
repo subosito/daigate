@@ -4,8 +4,10 @@ import icfg "github.com/subosito/daigate/internal/config"
 
 // Config types re-exported for operator binaries and linked plugins.
 type (
-	ConfigFile  = icfg.File
-	IssuerEntry = icfg.IssuerEntry
+	ConfigFile   = icfg.File
+	IssuerEntry  = icfg.IssuerEntry
+	Profile      = icfg.Profile
+	OAuthProfile = icfg.OAuthProfile
 )
 
 // LoadConfig reads daigate.yaml.

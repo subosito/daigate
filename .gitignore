@@ -6,3 +6,7 @@ broker.db
 daigate.yaml
 /providers.yaml
 *.log
+
+# Local go.mod overrides (cp go.mod go.local.mod + replace; see sibling repos)
+go.local.mod
+go.local.sum

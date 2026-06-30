@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/subosito/daigate/adaptersdk/handler"
+	"github.com/subosito/daigate/upstream"
 )
 
 // ImageHandler relays image requests without transformation.
@@ -17,7 +18,8 @@ type ImageHandler struct {
 func (h *ImageHandler) Protocol() string { return h.ProtocolName }
 
 func (h *ImageHandler) Forward(ctx context.Context, client *http.Client, t handler.Target, ingressPath string, body io.Reader, hdr http.Header) (*http.Response, error) {
-	return relay(ctx, client, t, http.MethodPost, ingressPath, body, hdr)
+	path := upstream.ImageUpstreamPath(t.BaseURL, ingressPath)
+	return relay(ctx, client, t, http.MethodPost, path, body, hdr)
 }
 
 // SpeechHandler relays TTS requests without transformation.
@@ -45,5 +47,6 @@ func (h *VideoHandler) Forward(ctx context.Context, client *http.Client, t handl
 	if body == nil {
 		method = http.MethodGet
 	}
-	return relay(ctx, client, t, method, ingressPath, body, hdr)
+	path := upstream.VideoUpstreamPath(t.BaseURL, ingressPath)
+	return relay(ctx, client, t, method, path, body, hdr)
 }

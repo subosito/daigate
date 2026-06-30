@@ -57,12 +57,7 @@ func Refresh(ctx context.Context, profile string, prof config.Profile, cur store
 	if refreshed.Email == "" {
 		refreshed.Email = cur.Email
 	}
-	if refreshed.AccountID == "" {
-		refreshed.AccountID = cur.AccountID
-	}
-	if refreshed.ProjectID == "" {
-		refreshed.ProjectID = cur.ProjectID
-	}
+	refreshed.Extras = store.MergeExtras(cur.Extras, refreshed.Extras)
 	return refreshed, nil
 }
 

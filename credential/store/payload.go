@@ -3,6 +3,7 @@ package store
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/subosito/daigate/credential/seal"
@@ -14,13 +15,17 @@ type apiPayload struct {
 }
 
 type oauthPayload struct {
-	Type    string `json:"type"`
-	Access  string `json:"access"`
-	Refresh string `json:"refresh"`
-	Expires int64  `json:"expires"`
-	Email   string `json:"email,omitempty"`
-	Account string `json:"account_id,omitempty"`
-	Project string `json:"project_id,omitempty"`
+	Type    string            `json:"type"`
+	Access  string            `json:"access"`
+	Refresh string            `json:"refresh"`
+	Expires int64             `json:"expires"`
+	Email   string            `json:"email,omitempty"`
+	Extras  map[string]string `json:"extras,omitempty"`
+	// Legacy vendor-specific keys — merged into Extras on read; not written on encrypt.
+	Account      string `json:"account_id,omitempty"`
+	AccountCamel string `json:"accountId,omitempty"`
+	Project      string `json:"project_id,omitempty"`
+	ProjectCamel string `json:"projectId,omitempty"`
 }
 
 // EncryptPayload JSON-marshals v and encrypts with key.
@@ -53,8 +58,7 @@ func MaterialFromDecrypted(profile string, kind Kind, raw []byte) (Material, err
 			mat.ExpiresAt = time.UnixMilli(p.Expires)
 		}
 		mat.Email = p.Email
-		mat.AccountID = p.Account
-		mat.ProjectID = p.Project
+		mat.Extras = mergeOAuthExtras(p.Extras, p.Account, p.AccountCamel, p.Project, p.ProjectCamel)
 	default:
 		return Material{}, fmt.Errorf("unknown kind %q", kind)
 	}
@@ -70,8 +74,74 @@ func oauthMaterialPayload(mat Material) oauthPayload {
 	if !mat.ExpiresAt.IsZero() {
 		exp = mat.ExpiresAt.UnixMilli()
 	}
+	extras := mat.Extras
+	if extras == nil {
+		extras = map[string]string{}
+	}
 	return oauthPayload{
 		Type: "oauth", Access: mat.AccessToken, Refresh: mat.RefreshToken,
-		Expires: exp, Email: mat.Email, Account: mat.AccountID, Project: mat.ProjectID,
+		Expires: exp, Email: mat.Email, Extras: extras,
 	}
+}
+
+func mergeOAuthExtras(extras map[string]string, legacy ...string) map[string]string {
+	out := cloneExtras(extras)
+	if _, ok := out["account_id"]; !ok {
+		if id := firstNonEmpty(legacy[0], legacy[1]); id != "" {
+			setExtra(out, "account_id", id)
+		}
+	}
+	if _, ok := out["project_id"]; !ok {
+		if id := firstNonEmpty(legacy[2], legacy[3]); id != "" {
+			setExtra(out, "project_id", id)
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func cloneExtras(in map[string]string) map[string]string {
+	if len(in) == 0 {
+		return map[string]string{}
+	}
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		if s := strings.TrimSpace(v); s != "" {
+			out[k] = s
+		}
+	}
+	return out
+}
+
+func setExtra(m map[string]string, key, value string) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return
+	}
+	m[key] = value
+}
+
+// MergeExtras copies keys from cur into refreshed when refreshed omits them.
+func MergeExtras(cur, refreshed map[string]string) map[string]string {
+	if len(cur) == 0 {
+		return refreshed
+	}
+	out := cloneExtras(refreshed)
+	for k, v := range cur {
+		if _, ok := out[k]; !ok {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if s := strings.TrimSpace(v); s != "" {
+			return s
+		}
+	}
+	return ""
 }

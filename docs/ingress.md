@@ -47,6 +47,8 @@ Media uses the **same** `OPENAI_BASE_URL` + gateway key. Upstream vendor choice 
 
 **Client `Authorization` / `x-api-key`** authenticates to **daigate**, not to the upstream vendor. daigate replaces those headers with **provider credentials** from the vault before the outbound call.
 
+**Ambiguous routing:** when one catalog model shares an ingress wire across multiple `modalities.<key>` rows, set **`X-Catalog-Modality`** to the yaml key (e.g. `chat`, `image`). Key names are operator-defined — see [catalog.md](catalog.md) § Modalities.
+
 ---
 
 ## Minimal operator setup

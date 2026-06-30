@@ -29,6 +29,14 @@ examples/          # starter daigate.yaml, providers.yaml
 docs/              # documentation index: docs/README.md
 ```
 
+## Catalog modality hints
+
+**Modality `<key>` names are operator-defined** in `providers.yaml` (`map[string]Modality`). daigate does not ship a fixed enum. Wire-implied hint today: `embed` on `openai-embeddings`. Everything else is yaml — hosts may add keys like `search_web`; those are **not** daigate built-ins.
+
+When one model + wire maps to multiple rows (e.g. `chat` + `image` on `openai-chat-completions`), set **`X-Catalog-Modality`** to the yaml key. `catalog.ModalityHintFromRequest` → `ResolveWithModality`; header stripped upstream. Exception: `chat` + `search_web`/`search_x` only → defaults to `chat` (`pickModality`).
+
+Hosts shape headers via `gateway.WrapDataHandler`. `gateway.Profile` exported for credential CLIs.
+
 ## Plugin hooks
 
 Core registers plugins via link-time hooks (implementations live in operator modules):

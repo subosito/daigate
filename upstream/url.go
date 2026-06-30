@@ -20,3 +20,54 @@ func JoinURL(baseURL, path string) string {
 	}
 	return base + path
 }
+
+// ImageUpstreamPath maps OpenAI ingress /v1/images/* to provider base_url layout.
+// Matches stock dududu-router imagine drivers (base …/v1/images + /generations).
+func ImageUpstreamPath(baseURL, ingressPath string) string {
+	base := strings.TrimRight(baseURL, "/")
+	switch ingressPath {
+	case "/v1/images/generations":
+		if strings.HasSuffix(base, "/images") {
+			return base + "/generations"
+		}
+		return JoinURL(baseURL, ingressPath)
+	case "/v1/images/edits":
+		if strings.HasSuffix(base, "/images") {
+			return base + "/edits"
+		}
+		return JoinURL(baseURL, ingressPath)
+	default:
+		return JoinURL(baseURL, ingressPath)
+	}
+}
+
+// VideoUpstreamPath maps OpenAI ingress /v1/videos/* to provider base_url layout.
+// Matches stock dududu-router imagine drivers (base …/v1/videos + /generations or /{id}).
+func VideoUpstreamPath(baseURL, ingressPath string) string {
+	base := strings.TrimRight(baseURL, "/")
+	switch {
+	case ingressPath == "/v1/videos/generations":
+		if strings.HasSuffix(base, "/videos") {
+			return base + "/generations"
+		}
+		return JoinURL(baseURL, ingressPath)
+	case ingressPath == "/v1/videos/edits":
+		if strings.HasSuffix(base, "/videos") {
+			return base + "/edits"
+		}
+		return JoinURL(baseURL, ingressPath)
+	case ingressPath == "/v1/videos/extensions":
+		if strings.HasSuffix(base, "/videos") {
+			return base + "/extensions"
+		}
+		return JoinURL(baseURL, ingressPath)
+	case strings.HasPrefix(ingressPath, "/v1/videos/"):
+		if strings.HasSuffix(base, "/videos") {
+			id := strings.TrimPrefix(ingressPath, "/v1/videos/")
+			return base + "/" + id
+		}
+		return JoinURL(baseURL, ingressPath)
+	default:
+		return JoinURL(baseURL, ingressPath)
+	}
+}

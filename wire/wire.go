@@ -276,7 +276,8 @@ func (e *Engine) handleWire(w http.ResponseWriter, r *http.Request, p keyring.Pr
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
-	plan, err := e.Catalog.Resolve(model, wireID)
+	modality := catalog.ModalityHintFromRequest(r, wireID)
+	plan, err := e.Catalog.ResolveWithModality(model, wireID, modality)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -284,6 +285,8 @@ func (e *Engine) handleWire(w http.ResponseWriter, r *http.Request, p keyring.Pr
 	failover := plan.Strategy == catalog.StrategyFailover
 	ingressPath := r.URL.Path
 	ctx := r.Context()
+	outHdr := r.Header.Clone()
+	catalog.StripIngressControlHeaders(outHdr)
 
 	for i, target := range plan.Targets {
 		recordTarget(rec, target)
@@ -297,7 +300,7 @@ func (e *Engine) handleWire(w http.ResponseWriter, r *http.Request, p keyring.Pr
 		}
 		body := e.requestBody(raw, target.UpstreamModel, r)
 		ht := toHandlerTarget(target, mat)
-		resp, err := e.forward(ctx, wireID, ingressPath, ht, body, r.Header)
+		resp, err := e.forward(ctx, wireID, ingressPath, ht, body, outHdr)
 		if err != nil {
 			if failover && i < len(plan.Targets)-1 && upstream.Retryable(0, err) {
 				continue

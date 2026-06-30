@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/subosito/daigate/adaptersdk"
 	"github.com/subosito/daigate/adaptersdk/handler"
@@ -72,7 +73,12 @@ func forward(ctx context.Context, client *http.Client, t handler.Target, path st
 }
 
 func relay(ctx context.Context, client *http.Client, t handler.Target, method, path string, body io.Reader, hdr http.Header) (*http.Response, error) {
-	url := upstream.JoinURL(t.BaseURL, path)
+	url := path
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		// absolute upstream URL (image adapters)
+	} else {
+		url = upstream.JoinURL(t.BaseURL, path)
+	}
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"strings"
 	"time"
 )
 
@@ -15,15 +16,24 @@ const (
 
 // Material is decrypted upstream credential for inject.
 type Material struct {
-	Profile     string
-	Kind        Kind
-	APIKey      string
-	AccessToken string
+	Profile      string
+	Kind         Kind
+	APIKey       string
+	AccessToken  string
 	RefreshToken string
-	ExpiresAt   time.Time
-	AccountID   string
-	ProjectID   string
-	Email       string
+	ExpiresAt    time.Time
+	Email        string
+	// Extras is opaque key-value metadata from the credential store.
+	// Adapters and inject extensions read keys they own; core never interprets vendor keys.
+	Extras map[string]string
+}
+
+// Extra returns a trimmed metadata value by key.
+func (m Material) Extra(key string) string {
+	if m.Extras == nil {
+		return ""
+	}
+	return strings.TrimSpace(m.Extras[key])
 }
 
 // CredentialSummary is operator-visible metadata (no secrets).

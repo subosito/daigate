@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,8 +21,9 @@ type ServeOptions struct {
 	ConfigPath  string
 	ServiceName string
 	Registry    func(cfg *ConfigFile) (*adaptersdk.Registry, error)
-	CatalogLoad func(path string) (*catalog.Catalog, error)
-	DataMount   DataMount
+	CatalogLoad       func(path string) (*catalog.Catalog, error)
+	DataMount         DataMount
+	WrapDataHandler   func(http.Handler) http.Handler
 }
 
 // Serve loads config, opens stores, and runs until ctx is cancelled or error.
@@ -113,7 +115,8 @@ func openGateway(opts ServeOptions) (*Gateway, error) {
 		AdminEnabled: cfgFile.AdminPlaneEnabled(),
 		DataListen:   cfgFile.Serve.DataListen,
 		AdminListen:  cfgFile.Admin.Listen,
-		DataMount:    opts.DataMount,
+		DataMount:       opts.DataMount,
+		WrapDataHandler: opts.WrapDataHandler,
 	})
 }
 

@@ -155,6 +155,14 @@ type RoutePlan struct {
 // Resolve picks upstream route(s) for model + wire.
 // Failover returns all pool entries in yaml order; round_robin returns one entry.
 func (c *Catalog) Resolve(model, wire string) (RoutePlan, error) {
+	return c.ResolveWithModality(model, wire, "")
+}
+
+// ResolveWithModality picks upstream route(s) for model + wire, optionally constrained
+// by catalog modality key (models.<id>.modalities.<key>). Pass hint from
+// ModalityHintFromRequest or set explicitly; empty hint auto-selects
+// when unambiguous and errors when multiple modalities share the wire.
+func (c *Catalog) ResolveWithModality(model, wire, modality string) (RoutePlan, error) {
 	m, ok := c.doc.Models[model]
 	if !ok {
 		return RoutePlan{}, fmt.Errorf("unknown model %q", model)
@@ -169,10 +177,10 @@ func (c *Catalog) Resolve(model, wire string) (RoutePlan, error) {
 	if len(modNames) == 0 {
 		return RoutePlan{}, fmt.Errorf("model %q has no modality for wire %q", model, wire)
 	}
-	if len(modNames) > 1 {
-		return RoutePlan{}, fmt.Errorf("model %q has multiple modalities for wire %q: %s", model, wire, strings.Join(modNames, ", "))
+	modName, err := pickModality(modNames, modality)
+	if err != nil {
+		return RoutePlan{}, err
 	}
-	modName := modNames[0]
 	mod := m.Modalities[modName]
 	if len(mod.Providers) == 0 {
 		return RoutePlan{}, fmt.Errorf("model %q: empty provider pool", model)
@@ -200,6 +208,47 @@ func (c *Catalog) Resolve(model, wire string) (RoutePlan, error) {
 	return RoutePlan{Strategy: strat, Targets: targets}, nil
 }
 
+func pickModality(candidates []string, hint string) (string, error) {
+	hint = strings.TrimSpace(hint)
+	if hint != "" {
+		for _, name := range candidates {
+			if name == hint {
+				return name, nil
+			}
+		}
+		return "", fmt.Errorf("model modality %q not available for wire", hint)
+	}
+	if len(candidates) == 1 {
+		return candidates[0], nil
+	}
+	// Operator-defined keys search_web/search_x: default chat when they are the only siblings.
+	if hasModality(candidates, "chat") && onlySearchSiblings(candidates) {
+		return "chat", nil
+	}
+	return "", fmt.Errorf("multiple modalities for wire: %s (set %s)", strings.Join(candidates, ", "), HeaderCatalogModality)
+}
+
+func hasModality(candidates []string, name string) bool {
+	for _, c := range candidates {
+		if c == name {
+			return true
+		}
+	}
+	return false
+}
+
+func onlySearchSiblings(candidates []string) bool {
+	for _, name := range candidates {
+		if name == "chat" {
+			continue
+		}
+		if name != "search_web" && name != "search_x" {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *Catalog) targetFromEntry(model string, entry PoolEntry, wire string) (Target, error) {
 	prov, ok := c.doc.Providers[entry.ProviderRef]
 	if !ok {
@@ -209,11 +258,15 @@ func (c *Catalog) targetFromEntry(model string, entry PoolEntry, wire string) (T
 	if err != nil {
 		return Target{}, err
 	}
+	upstreamModel := strings.TrimSpace(entry.Model)
+	if upstreamModel == "" {
+		upstreamModel = strings.TrimSpace(model)
+	}
 	return Target{
 		Model: model, ProviderRef: entry.ProviderRef,
 		Protocol: surf.Protocol, Adapter: surf.Adapter, BaseURL: surf.BaseURL,
 		CredentialProfile: prov.CredentialProfile,
-		UpstreamModel: entry.Model, InjectPreset: prov.InjectPreset,
+		UpstreamModel: upstreamModel, InjectPreset: prov.InjectPreset,
 	}, nil
 }
 

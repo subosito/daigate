@@ -172,19 +172,32 @@ router:
 
 ### Modalities
 
-| Modality | Ingress path | Typical use |
-|----------|--------------|-------------|
+daigate stores modalities as **`models.<id>.modalities.<key>`** — the `<key>` string is **operator-defined** in `providers.yaml`. There is no fixed enum in core; any yaml key works if resolve can pick a unique row for the wire.
+
+**Wire-implied keys** (daigate sets a default hint from ingress path):
+
+| Key | Ingress path | Typical use |
+|-----|--------------|-------------|
+| `embed` | **`/v1/embeddings`** | Embeddings |
+
+**Common operator keys** (documented convention; not hardcoded in resolve except where noted):
+
+| Key | Ingress path | Typical use |
+|-----|--------------|-------------|
 | `chat` | `/v1/chat/completions`, `/v1/messages`, `/v1/responses` | LLM chat |
-| `embed` | **`/v1/embeddings`** | RAG, recall, semantic search |
-| `image` | `/v1/images/generations`, `/edits` | Image gen/edit |
+| `image` | `/v1/images/generations`, `/edits` — or same chat wire for vision | Image gen/edit or vision on chat |
 | `speech` | `/v1/audio/speech` | TTS |
 | `video` | `/v1/videos/generations`, `GET /v1/videos/{id}` | Video gen |
 
+Hosts may add more keys (`search_web`, `audio_in`, …) for extra surfaces on the same wire. Those names live in **your** catalog only; map them to **`X-Catalog-Modality`** at the host edge. Do not assume daigate knows product-specific labels.
+
+**Disambiguation default:** when the only ambiguity is `chat` plus keys named `search_web` / `search_x`, resolve defaults to `chat` without a header. All other multi-modality wires require **`X-Catalog-Modality`** (e.g. `chat` + `image` on `openai-chat-completions`).
+
 ### Resolution rules
 
-1. **Ingress path** picks **wire** and default **modality** (`/v1/embeddings` → `embed` + `openai-embeddings`).
+1. **Ingress path** picks **wire** and wire-implied modality hint when applicable (`/v1/embeddings` → `embed` + `openai-embeddings`).
 2. Request `model` loads catalog entry.
-3. Modality selects `modalities.<name>` (e.g. `modalities.embed`).
+3. Modality selects `modalities.<name>` (e.g. `modalities.embed`). When one model + wire maps to **multiple** modalities (e.g. `chat` and `image` on `openai-chat-completions`), set ingress header **`X-Catalog-Modality`** to the yaml key. daigate strips it before upstream relay.
 4. **Strategy** picks provider from pool (see below).
 5. `provider_ref` → provider surface (`protocol` or `adapter`, `base_url`, `credential_profile`).
 6. Pool `model` field → upstream provider model string.

@@ -178,6 +178,19 @@ type Applier interface {
 
 Provider **templates** in catalog may declare `inject_preset: bearer | x-api-key | <header-name>`. OAuth extras (e.g. `anthropic_oauth` beta header) register via `inject.RegisterOAuthPreset` in the **operator binary** at link time — not in stock CLI.
 
+### Credential metadata (`Material.Extras`)
+
+**daigate core is provider-agnostic.** The credential store may attach opaque key-value metadata on OAuth (and future kinds) as `extras` in the encrypted JSON blob. Core `inject.Apply` only handles generic auth shapes (Bearer, `x-api-key`, named header presets, registered OAuth presets).
+
+| Layer | Responsibility |
+|-------|----------------|
+| **Core store** | Persist `extras` map; merge legacy `accountId` / `project_id` keys into `extras` on read for backward compat |
+| **Core inject** | Never set vendor-specific headers from hard-coded field names |
+| **Integrator adapters** | Read `Material.Extra("…")` and set upstream headers their vendor requires (e.g. Codex `chatgpt-account-id` from `account_id`) |
+| **Vendor OAuth modules** | Populate `extras` at login/refresh time; refresh preserves keys via `MergeExtras` |
+
+Do **not** add per-provider fields to `store.Material` or core inject. New vendor requirements → new `extras` keys + adapter or `RegisterOAuthPreset` in the operator binary.
+
 ---
 
 ## (B) OAuth — generic host module (default)

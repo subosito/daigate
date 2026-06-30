@@ -47,3 +47,57 @@ func TestJoinURL(t *testing.T) {
 		}
 	}
 }
+
+func TestImageUpstreamPath(t *testing.T) {
+	tests := []struct {
+		base, ingress, want string
+	}{
+		{
+			base:    "https://api.x.ai/v1/images",
+			ingress: "/v1/images/generations",
+			want:    "https://api.x.ai/v1/images/generations",
+		},
+		{
+			base:    "https://api.openai.com/v1/images",
+			ingress: "/v1/images/edits",
+			want:    "https://api.openai.com/v1/images/edits",
+		},
+		{
+			base:    "https://api.tokenrouter.com",
+			ingress: "/v1/images/generations",
+			want:    "https://api.tokenrouter.com/v1/images/generations",
+		},
+	}
+	for _, tc := range tests {
+		if got := upstream.ImageUpstreamPath(tc.base, tc.ingress); got != tc.want {
+			t.Fatalf("ImageUpstreamPath(%q, %q) = %q, want %q", tc.base, tc.ingress, got, tc.want)
+		}
+	}
+}
+
+func TestVideoUpstreamPath(t *testing.T) {
+	tests := []struct {
+		base, ingress, want string
+	}{
+		{
+			base:    "https://api.x.ai/v1/videos",
+			ingress: "/v1/videos/generations",
+			want:    "https://api.x.ai/v1/videos/generations",
+		},
+		{
+			base:    "https://api.x.ai/v1/videos",
+			ingress: "/v1/videos/vid_abc123",
+			want:    "https://api.x.ai/v1/videos/vid_abc123",
+		},
+		{
+			base:    "https://api.example.com",
+			ingress: "/v1/videos/generations",
+			want:    "https://api.example.com/v1/videos/generations",
+		},
+	}
+	for _, tc := range tests {
+		if got := upstream.VideoUpstreamPath(tc.base, tc.ingress); got != tc.want {
+			t.Fatalf("VideoUpstreamPath(%q, %q) = %q, want %q", tc.base, tc.ingress, got, tc.want)
+		}
+	}
+}
