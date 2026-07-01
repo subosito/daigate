@@ -17,7 +17,7 @@ func ModalityHintFromRequest(r *http.Request, wireID string) string {
 	switch wireID {
 	case WireOpenAIEmbed:
 		return "embed"
-	case WireOpenAIImagesGen, WireOpenAIAudioSpeech, WireOpenAIVideos:
+	case WireOpenAIImagesGen, WireOpenAIAudioSpeech, WireOpenAIAudioTranscriptions, WireOpenAIVideos:
 		return ""
 	}
 	if r == nil {

@@ -174,6 +174,7 @@ func TestWireForPathMedia(t *testing.T) {
 		{"/v1/images/generations", catalog.WireOpenAIImagesGen},
 		{"/v1/images/edits", catalog.WireOpenAIImagesGen},
 		{"/v1/audio/speech", catalog.WireOpenAIAudioSpeech},
+		{"/v1/audio/transcriptions", catalog.WireOpenAIAudioTranscriptions},
 		{"/v1/videos/generations", catalog.WireOpenAIVideos},
 		{"/v1/videos/req_abc", catalog.WireOpenAIVideos},
 	}

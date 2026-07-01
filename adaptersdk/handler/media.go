@@ -18,6 +18,12 @@ type Speech interface {
 	Forward(ctx context.Context, client *http.Client, t Target, body io.Reader, hdr http.Header) (*http.Response, error)
 }
 
+// Transcription handles speech-to-text (Whisper / OpenAI-compat STT).
+type Transcription interface {
+	Protocol() string
+	Forward(ctx context.Context, client *http.Client, t Target, body io.Reader, hdr http.Header) (*http.Response, error)
+}
+
 // Video handles video generation.
 type Video interface {
 	Protocol() string

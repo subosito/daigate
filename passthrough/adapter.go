@@ -28,6 +28,7 @@ func (a *Adapter) Register(reg *adaptersdk.Registry) error {
 	adaptersdk.RegisterEmbed(reg, &EmbedHandler{ProtocolName: "openai-embeddings", WireID: catalog.WireOpenAIEmbed})
 	adaptersdk.RegisterImage(reg, &ImageHandler{ProtocolName: "openai-images", WireID: catalog.WireOpenAIImagesGen})
 	adaptersdk.RegisterSpeech(reg, &SpeechHandler{ProtocolName: "openai-tts", WireID: catalog.WireOpenAIAudioSpeech})
+	adaptersdk.RegisterTranscription(reg, &TranscriptionHandler{ProtocolName: "openai-transcriptions", WireID: catalog.WireOpenAIAudioTranscriptions})
 	adaptersdk.RegisterVideo(reg, &VideoHandler{ProtocolName: "openai-videos", WireID: catalog.WireOpenAIVideos})
 	return nil
 }

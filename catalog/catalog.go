@@ -18,8 +18,9 @@ const (
 	WireOpenAIEmbed      = "openai-embeddings"
 	WireOpenAIResponses     = "openai-responses"
 	WireOpenAIImagesGen     = "openai-images-generations"
-	WireOpenAIAudioSpeech   = "openai-audio-speech"
-	WireOpenAIVideos        = "openai-videos"
+	WireOpenAIAudioSpeech        = "openai-audio-speech"
+	WireOpenAIAudioTranscriptions = "openai-audio-transcriptions"
+	WireOpenAIVideos             = "openai-videos"
 )
 
 // Strategy names.
@@ -125,6 +126,8 @@ func WireForPath(path string) (string, bool) {
 		return WireOpenAIImagesGen, true
 	case "/v1/audio/speech":
 		return WireOpenAIAudioSpeech, true
+	case "/v1/audio/transcriptions":
+		return WireOpenAIAudioTranscriptions, true
 	case "/v1/videos/generations":
 		return WireOpenAIVideos, true
 	default:
@@ -316,6 +319,8 @@ func protocolMatchesWire(protocol, wire string) bool {
 		return protocol == "openai-images"
 	case WireOpenAIAudioSpeech:
 		return protocol == "openai-tts"
+	case WireOpenAIAudioTranscriptions:
+		return protocol == "openai-transcriptions"
 	case WireOpenAIVideos:
 		return protocol == "openai-videos"
 	default:

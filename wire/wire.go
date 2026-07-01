@@ -43,6 +43,7 @@ func (e *Engine) Handler() http.Handler {
 	mux.HandleFunc("POST /v1/images/generations", e.withAuth(catalog.WireOpenAIImagesGen))
 	mux.HandleFunc("POST /v1/images/edits", e.withAuth(catalog.WireOpenAIImagesGen))
 	mux.HandleFunc("POST /v1/audio/speech", e.withAuth(catalog.WireOpenAIAudioSpeech))
+	mux.HandleFunc("POST /v1/audio/transcriptions", e.withAuth(catalog.WireOpenAIAudioTranscriptions))
 	mux.HandleFunc("POST /v1/videos/generations", e.withAuth(catalog.WireOpenAIVideos))
 	mux.HandleFunc("GET /v1/videos/{id}", e.withAuth(catalog.WireOpenAIVideos))
 	return observability.IngressLog("", mux)
@@ -243,6 +244,12 @@ func (e *Engine) forward(ctx context.Context, wireID, ingressPath string, ht han
 			return nil, errRouteNotRegistered
 		}
 		return h.Forward(ctx, e.Client.HTTP, ht, body, hdr)
+	case catalog.WireOpenAIAudioTranscriptions:
+		h, ok := lookupTranscription(e.Adapters, target)
+		if !ok {
+			return nil, errRouteNotRegistered
+		}
+		return h.Forward(ctx, e.Client.HTTP, ht, body, hdr)
 	case catalog.WireOpenAIVideos:
 		h, ok := lookupVideo(e.Adapters, target)
 		if !ok {
@@ -324,7 +331,7 @@ func (e *Engine) handleWire(w http.ResponseWriter, r *http.Request, p keyring.Pr
 
 func validateWireMethod(r *http.Request, wireID string) error {
 	switch wireID {
-	case catalog.WireOpenAIImagesGen, catalog.WireOpenAIAudioSpeech:
+	case catalog.WireOpenAIImagesGen, catalog.WireOpenAIAudioSpeech, catalog.WireOpenAIAudioTranscriptions:
 		if r.Method != http.MethodPost {
 			return errMethodNotAllowed
 		}

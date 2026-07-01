@@ -125,6 +125,62 @@ models:
 	}
 }
 
+func TestTranscriptionForward(t *testing.T) {
+	var gotPath string
+	var gotCT string
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotCT = r.Header.Get("Content-Type")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"text":"hello du"}`)
+	}))
+	defer up.Close()
+
+	engine := mediaTestEngine(t, up.URL, `
+providers:
+  stt:
+    credential_profile: stt
+    protocol: openai-transcriptions
+    base_url: `+up.URL+`
+models:
+  whisper-test:
+    modalities:
+      voice:
+        wire: openai-audio-transcriptions
+        providers:
+          - provider_ref: stt
+            model: whisper-large-v3-turbo
+`)
+	ts := httptest.NewServer(engine.Handler())
+	defer ts.Close()
+
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	_ = w.WriteField("model", "whisper-test")
+	fw, _ := w.CreateFormFile("file", "note.ogg")
+	_, _ = io.WriteString(fw, "oggbytes")
+	_ = w.Close()
+
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/v1/audio/transcriptions", &buf)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+mediaTestSecret(t, engine))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		b, _ := io.ReadAll(resp.Body)
+		t.Fatalf("status=%d %s", resp.StatusCode, b)
+	}
+	if gotPath != "/v1/audio/transcriptions" {
+		t.Fatalf("path=%q", gotPath)
+	}
+	if !strings.HasPrefix(gotCT, "multipart/") {
+		t.Fatalf("content-type=%q", gotCT)
+	}
+}
+
 func TestSpeechForward(t *testing.T) {
 	var gotPath string
 	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -246,6 +302,7 @@ func mediaTestEngine(t *testing.T, _ string, providersYAML string) *wire.Engine 
 	st := store.NewMemory(key)
 	for _, prof := range []struct{ name, secret string }{
 		{"img", "sk-img-upstream"},
+		{"stt", "sk-stt-upstream"},
 		{"tts", "sk-tts-upstream"},
 		{"vid", "sk-vid-upstream"},
 	} {

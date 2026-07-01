@@ -17,6 +17,7 @@ func TestRetryable(t *testing.T) {
 		{0, errors.New("dial"), true},
 		{http.StatusOK, nil, false},
 		{http.StatusBadRequest, nil, false},
+		{http.StatusPaymentRequired, nil, true},
 		{http.StatusTooManyRequests, nil, true},
 		{http.StatusBadGateway, nil, true},
 		{http.StatusServiceUnavailable, nil, true},

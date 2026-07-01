@@ -34,6 +34,18 @@ func (h *SpeechHandler) Forward(ctx context.Context, client *http.Client, t hand
 	return relay(ctx, client, t, http.MethodPost, "/v1/audio/speech", body, hdr)
 }
 
+// TranscriptionHandler relays STT requests without transformation.
+type TranscriptionHandler struct {
+	ProtocolName string
+	WireID       string
+}
+
+func (h *TranscriptionHandler) Protocol() string { return h.ProtocolName }
+
+func (h *TranscriptionHandler) Forward(ctx context.Context, client *http.Client, t handler.Target, body io.Reader, hdr http.Header) (*http.Response, error) {
+	return relay(ctx, client, t, http.MethodPost, "/v1/audio/transcriptions", body, hdr)
+}
+
 // VideoHandler relays video submit/poll without transformation.
 type VideoHandler struct {
 	ProtocolName string

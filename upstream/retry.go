@@ -10,7 +10,8 @@ func Retryable(status int, err error) bool {
 		return true
 	}
 	switch status {
-	case http.StatusTooManyRequests,
+	case http.StatusPaymentRequired, // upstream account/plan exhausted — try next pool member
+		http.StatusTooManyRequests,
 		http.StatusBadGateway,
 		http.StatusServiceUnavailable,
 		http.StatusGatewayTimeout:

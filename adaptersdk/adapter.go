@@ -13,8 +13,9 @@ type Registry struct {
 	ChatHandlers   map[string]handler.Chat
 	EmbedHandlers  map[string]handler.Embed
 	ImageHandlers  map[string]handler.Image
-	SpeechHandlers map[string]handler.Speech
-	VideoHandlers  map[string]handler.Video
+	SpeechHandlers         map[string]handler.Speech
+	TranscriptionHandlers  map[string]handler.Transcription
+	VideoHandlers          map[string]handler.Video
 	ImageAdapters  map[string]handler.Image
 	SpeechAdapters map[string]handler.Speech
 	EmbedAdapters  map[string]handler.Embed
@@ -27,8 +28,9 @@ func NewRegistry() *Registry {
 		ChatHandlers:   make(map[string]handler.Chat),
 		EmbedHandlers:  make(map[string]handler.Embed),
 		ImageHandlers:  make(map[string]handler.Image),
-		SpeechHandlers: make(map[string]handler.Speech),
-		VideoHandlers:  make(map[string]handler.Video),
+		SpeechHandlers:        make(map[string]handler.Speech),
+		TranscriptionHandlers: make(map[string]handler.Transcription),
+		VideoHandlers:         make(map[string]handler.Video),
 		ImageAdapters:  make(map[string]handler.Image),
 		SpeechAdapters: make(map[string]handler.Speech),
 		EmbedAdapters:  make(map[string]handler.Embed),
@@ -55,6 +57,11 @@ func RegisterImage(reg *Registry, h handler.Image) {
 // RegisterSpeech adds a passthrough speech handler keyed by protocol.
 func RegisterSpeech(reg *Registry, h handler.Speech) {
 	reg.SpeechHandlers[h.Protocol()] = h
+}
+
+// RegisterTranscription adds a passthrough STT handler keyed by protocol.
+func RegisterTranscription(reg *Registry, h handler.Transcription) {
+	reg.TranscriptionHandlers[h.Protocol()] = h
 }
 
 // RegisterVideo adds a passthrough video handler keyed by protocol.
